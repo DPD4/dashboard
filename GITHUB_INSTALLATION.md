@@ -77,6 +77,48 @@ curl "http://your-site.com/api/method/financial_dashboard_final.financial_dashbo
 
 ## 🔍 استكشاف الأخطاء
 
+### ⚠️ خطأ شائع: "No such file or directory: setup.py"
+
+**السبب:** النظام يبحث عن مجلد بالاسم الخطأ أو هناك مشكلة في التثبيت.
+
+**الحل:**
+
+```bash
+# 1. تحقق من اسم المجلد الفعلي
+cd ~/frappe-bench
+ls apps/ | grep -i dashboard
+
+# 2. إذا كان اسم المجلد مختلف، أعد تسميته
+# مثال: إذا كان اسم المجلد "financial-dashboard-erpnext"
+mv apps/financial-dashboard-erpnext apps/financial_dashboard_final
+
+# 3. تحقق من وجود setup.py
+ls apps/financial_dashboard_final/setup.py
+
+# 4. إذا لم يكن موجود، تحقق من محتويات المجلد
+ls -la apps/financial_dashboard_final/
+
+# 5. أعد المحاولة
+bench --site your-site.com install-app financial_dashboard_final
+```
+
+**إذا استمرت المشكلة:**
+
+```bash
+# احذف المجلد وأعد التحميل
+rm -rf apps/financial_dashboard_final
+rm -rf apps/financial-dashboard-erpnext
+
+# أعد التحميل
+bench get-app https://github.com/DPD4/financial-dashboard-erpnext.git
+
+# تحقق من الاسم الجديد
+ls apps/ | grep -i financial
+
+# ثبت باستخدام الاسم الصحيح
+bench --site your-site.com install-app [الاسم_الصحيح_للمجلد]
+```
+
 ### خطأ 1: "Repository not found"
 ```bash
 # تأكد من صحة رابط GitHub
