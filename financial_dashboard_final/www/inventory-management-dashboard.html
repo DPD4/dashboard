@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المخزون - ERPNext</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            direction: rtl;
+            color: #333;
+            padding: 20px;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .dashboard-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .top-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            border-top: 4px solid #6f42c1;
+        }
+
+        .metric-card:nth-child(2) { border-top-color: #28a745; }
+        .metric-card:nth-child(3) { border-top-color: #ffc107; }
+        .metric-card:nth-child(4) { border-top-color: #dc3545; }
+        .metric-card:nth-child(5) { border-top-color: #17a2b8; }
+        .metric-card:nth-child(6) { border-top-color: #fd7e14; }
+
+        .metric-icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .metric-change {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-weight: 500;
+        }
+
+        .positive { background: #d4edda; color: #155724; }
+        .negative { background: #f8d7da; color: #721c24; }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .inventory-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #6f42c1;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .inventory-table {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-available { background: #d4edda; color: #155724; }
+        .status-low { background: #fff3cd; color: #856404; }
+        .status-out { background: #f8d7da; color: #721c24; }
+
+        .progress-section {
+            margin-top: 20px;
+        }
+
+        .progress-item {
+            margin-bottom: 15px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-fill.high { background: #28a745; }
+        .progress-fill.medium { background: #ffc107; }
+        .progress-fill.low { background: #dc3545; }
+
+        @media (max-width: 768px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .dashboard-header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <h1>📦 إدارة المخزون</h1>
+        <p>نظام متكامل لإدارة ومراقبة المخزون</p>
+    </div>
+
+    <div class="top-metrics">
+        <div class="metric-card">
+            <div class="metric-icon">💰</div>
+            <div class="metric-value" id="inventory-value">35000</div>
+            <div class="metric-label">قيمة المخزون</div>
+            <div class="metric-change positive">+5%</div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-icon">📋</div>
+            <div class="metric-value" id="total-items">0</div>
+            <div class="metric-label">إجمالي المنتجات</div>
+            <div class="metric-change positive">+2%</div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-icon">⚠️</div>
+            <div class="metric-value" id="low-stock">2</div>
+            <div class="metric-label">منتجات منخفضة</div>
+            <div class="metric-change negative">+42%</div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-icon">📈</div>
+            <div class="metric-value" id="stock-turnover">2</div>
+            <div class="metric-label">دوران المخزون</div>
+            <div class="metric-change positive">+24%</div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-icon">🏪</div>
+            <div class="metric-value" id="warehouses">20.9M</div>
+            <div class="metric-label">إجمالي قيمة المخزون</div>
+            <div class="metric-change positive">+8%</div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-icon">📊</div>
+            <div class="metric-value" id="stock-movements">0</div>
+            <div class="metric-label">عدد الحركات الداخلية</div>
+            <div class="metric-change positive">+12%</div>
+        </div>
+    </div>
+
+    <div class="charts-section">
+        <div class="chart-card">
+            <div class="chart-title">📊 حركة المخزون الشهرية</div>
+            <canvas id="stockMovementChart" width="400" height="300"></canvas>
+        </div>
+        
+        <div class="chart-card">
+            <div class="chart-title">📈 التصنيفات المتوفرة</div>
+            <div class="inventory-stats">
+                <div class="stat-item">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">إلكترونيات متوفرة في المخزن</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">20</div>
+                    <div class="stat-label">إلكترونيات منخفضة</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">20</div>
+                    <div class="stat-label">إلكترونيات الأمان المنخفضة</div>
+                </div>
+            </div>
+            
+            <div class="progress-section">
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>متوفر</span>
+                        <span>75%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill high" style="width: 75%"></div>
+                    </div>
+                </div>
+                
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>منخفض</span>
+                        <span>20%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill medium" style="width: 20%"></div>
+                    </div>
+                </div>
+                
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>نفد</span>
+                        <span>5%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill low" style="width: 5%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="charts-section">
+        <div class="chart-card">
+            <div class="chart-title">📈 الأصناف الأكثر مبيعاً</div>
+            <canvas id="topSellingChart" width="400" height="300"></canvas>
+        </div>
+        
+        <div class="chart-card">
+            <div class="chart-title">📊 الأصناف الأكثر شراءً</div>
+            <canvas id="topPurchasingChart" width="400" height="300"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-card">
+        <div class="chart-title">🔄 توزيع المخزون</div>
+        <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+            <canvas id="inventoryDistributionChart" width="300" height="300"></canvas>
+        </div>
+        
+        <div class="inventory-stats" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+            <div class="stat-item">
+                <div class="stat-value">90.1K</div>
+                <div class="stat-label">مخزون رئيسي</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">8.1K</div>
+                <div class="stat-label">مخزون فرعي</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">1.8K</div>
+                <div class="stat-label">مخزون تالف</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">34</div>
+                <div class="stat-label">مخزون مرتجع</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="inventory-table">
+        <div class="chart-title">📋 تفاصيل المخزون</div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>الحالة</th>
+                    <th>المخزون المتاح</th>
+                    <th>الحد الأدنى</th>
+                    <th>الوحدة</th>
+                    <th>السعر</th>
+                    <th>اسم الصنف</th>
+                    <th>كود الصنف</th>
+                    <th>م</th>
+                </tr>
+            </thead>
+            <tbody id="inventory-table-body">
+                <tr>
+                    <td><span class="status-badge status-available">متوفر</span></td>
+                    <td>150</td>
+                    <td>20</td>
+                    <td>قطعة</td>
+                    <td>₪ 25.00</td>
+                    <td>لابتوب ديل</td>
+                    <td>ITEM-001</td>
+                    <td>1</td>
+                </tr>
+                <tr>
+                    <td><span class="status-badge status-low">منخفض</span></td>
+                    <td>15</td>
+                    <td>50</td>
+                    <td>قطعة</td>
+                    <td>₪ 12.50</td>
+                    <td>ماوس لاسلكي</td>
+                    <td>ITEM-002</td>
+                    <td>2</td>
+                </tr>
+                <tr>
+                    <td><span class="status-badge status-out">نفد</span></td>
+                    <td>0</td>
+                    <td>10</td>
+                    <td>قطعة</td>
+                    <td>₪ 8.75</td>
+                    <td>كيبورد عربي</td>
+                    <td>ITEM-003</td>
+                    <td>3</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // تحميل بيانات إدارة المخزون
+        async function loadInventoryData() {
+            try {
+                const response = await fetch('/api/method/financial_dashboard_final.financial_dashboard_final.api.get_inventory_analytics');
+                const data = await response.json();
+                
+                if (data.message && data.message.status === 'success') {
+                    updateInventoryMetrics(data.message.metrics);
+                    updateInventoryCharts(data.message.charts);
+                    updateInventoryTable(data.message.inventory_data);
+                } else {
+                    console.error('خطأ في تحميل البيانات:', data);
+                    loadFallbackInventoryData();
+                }
+            } catch (error) {
+                console.error('خطأ في الاتصال:', error);
+                loadFallbackInventoryData();
+            }
+        }
+
+        function updateInventoryMetrics(metrics) {
+            document.getElementById('inventory-value').textContent = metrics.inventory_value || '35000';
+            document.getElementById('total-items').textContent = metrics.total_items || '0';
+            document.getElementById('low-stock').textContent = metrics.low_stock || '2';
+            document.getElementById('stock-turnover').textContent = metrics.stock_turnover || '2';
+            document.getElementById('warehouses').textContent = metrics.warehouses || '20.9M';
+            document.getElementById('stock-movements').textContent = metrics.stock_movements || '0';
+        }
+
+        function updateInventoryCharts(chartData) {
+            // رسم حركة المخزون
+            const stockMovementCtx = document.getElementById('stockMovementChart').getContext('2d');
+            new Chart(stockMovementCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر'],
+                    datasets: [
+                        {
+                            label: 'دخول',
+                            data: [120, 150, 180, 140, 160, 190, 170, 200, 150, 180],
+                            backgroundColor: '#28a745'
+                        },
+                        {
+                            label: 'خروج',
+                            data: [100, 130, 160, 120, 140, 170, 150, 180, 130, 160],
+                            backgroundColor: '#dc3545'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // رسم الأصناف الأكثر مبيعاً
+            const topSellingCtx = document.getElementById('topSellingChart').getContext('2d');
+            new Chart(topSellingCtx, {
+                type: 'horizontalBar',
+                data: {
+                    labels: ['لابتوب ديل', 'ماوس لاسلكي', 'كيبورد عربي', 'شاشة سامسونج', 'طابعة HP'],
+                    datasets: [{
+                        label: 'الكمية المباعة',
+                        data: [85, 70, 60, 45, 30],
+                        backgroundColor: '#6f42c1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // رسم الأصناف الأكثر شراءً
+            const topPurchasingCtx = document.getElementById('topPurchasingChart').getContext('2d');
+            new Chart(topPurchasingCtx, {
+                type: 'horizontalBar',
+                data: {
+                    labels: ['مكونات كمبيوتر', 'أجهزة شبكات', 'مستلزمات مكتبية', 'أجهزة طباعة', 'ملحقات'],
+                    datasets: [{
+                        label: 'الكمية المشتراة',
+                        data: [95, 80, 65, 50, 35],
+                        backgroundColor: '#e83e8c'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // رسم توزيع المخزون
+            const distributionCtx = document.getElementById('inventoryDistributionChart').getContext('2d');
+            new Chart(distributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['مخزون رئيسي', 'مخزون فرعي', 'مخزون تالف', 'مخزون مرتجع'],
+                    datasets: [{
+                        data: [90.1, 8.1, 1.8, 0.034],
+                        backgroundColor: ['#28a745', '#ffc107', '#dc3545', '#6c757d'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateInventoryTable(inventoryData) {
+            // تحديث جدول المخزون بالبيانات الحقيقية
+            if (inventoryData && inventoryData.length > 0) {
+                const tbody = document.getElementById('inventory-table-body');
+                tbody.innerHTML = '';
+                
+                inventoryData.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><span class="status-badge status-${item.status}">${item.status_label}</span></td>
+                        <td>${item.available_qty}</td>
+                        <td>${item.min_qty}</td>
+                        <td>${item.uom}</td>
+                        <td>₪ ${item.price}</td>
+                        <td>${item.item_name}</td>
+                        <td>${item.item_code}</td>
+                        <td>${index + 1}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        function loadFallbackInventoryData() {
+            // بيانات احتياطية
+            updateInventoryMetrics({
+                inventory_value: '35000',
+                total_items: '0',
+                low_stock: '2',
+                stock_turnover: '2',
+                warehouses: '20.9M',
+                stock_movements: '0'
+            });
+            
+            updateInventoryCharts({});
+        }
+
+        // تحميل البيانات عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', loadInventoryData);
+        
+        // تحديث البيانات كل 5 دقائق
+        setInterval(loadInventoryData, 5 * 60 * 1000);
+    </script>
+</body>
+</html>

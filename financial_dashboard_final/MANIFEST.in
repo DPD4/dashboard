@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include financial_dashboard_final *.css
+recursive-include financial_dashboard_final *.csv
+recursive-include financial_dashboard_final *.html
+recursive-include financial_dashboard_final *.ico
+recursive-include financial_dashboard_final *.js
+recursive-include financial_dashboard_final *.json
+recursive-include financial_dashboard_final *.md
+recursive-include financial_dashboard_final *.png
+recursive-include financial_dashboard_final *.py
+recursive-include financial_dashboard_final *.svg
+recursive-include financial_dashboard_final *.txt
+recursive-exclude financial_dashboard_final *.pyc

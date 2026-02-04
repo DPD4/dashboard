@@ -1,0 +1,95 @@
+{
+ "category": "Modules",
+ "charts": [
+  {
+   "chart_name": "نظرة عامة مالية",
+   "label": "نظرة عامة مالية"
+  }
+ ],
+ "creation": "2024-01-01 12:00:00.000000",
+ "developer_mode_only": 0,
+ "disable_user_customization": 0,
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "extends_another_page": 0,
+ "hide_custom": 0,
+ "icon": "accounting",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "نظرة عامة مالية",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "لوحة التحكم المالية",
+   "link_count": 0,
+   "link_to": "financial-overview-dashboard",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2024-01-01 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Financial Dashboard Final",
+ "name": "Financial Overview",
+ "number_cards": [
+  {
+   "aggregate_function_based_on": "",
+   "color": "#FF4444",
+   "filters_json": "{}",
+   "label": "الرصيد الحالي",
+   "method": "financial_dashboard_final.financial_dashboard_final.api.get_current_balance",
+   "stats_time_interval": "Daily"
+  },
+  {
+   "aggregate_function_based_on": "",
+   "color": "#44FF44", 
+   "filters_json": "{}",
+   "label": "المبيعات",
+   "method": "financial_dashboard_final.financial_dashboard_final.api.get_monthly_sales",
+   "stats_time_interval": "Daily"
+  },
+  {
+   "aggregate_function_based_on": "",
+   "color": "#4444FF",
+   "filters_json": "{}",
+   "label": "الحسابات المدينة",
+   "method": "financial_dashboard_final.financial_dashboard_final.api.get_accounts_receivable",
+   "stats_time_interval": "Daily"
+  },
+  {
+   "aggregate_function_based_on": "",
+   "color": "#FF8800",
+   "filters_json": "{}",
+   "label": "صافي الربح",
+   "method": "financial_dashboard_final.financial_dashboard_final.api.get_net_profit",
+   "stats_time_interval": "Daily"
+  }
+ ],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 1.0,
+ "shortcuts": [
+  {
+   "color": "Red",
+   "format": "{} فاتورة",
+   "label": "فاتورة مبيعات",
+   "link_to": "Sales Invoice",
+   "stats_filter": "{\"docstatus\": 1}",
+   "type": "DocType"
+  },
+  {
+   "color": "Blue", 
+   "format": "{} قيد",
+   "label": "قيد يومية",
+   "link_to": "Journal Entry",
+   "stats_filter": "{\"docstatus\": 1}",
+   "type": "DocType"
+  }
+ ],
+ "title": "نظرة عامة مالية"
+}
